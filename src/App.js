@@ -1,60 +1,99 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
 import React from 'react';
-import { firebase } from "@react-native-firebase/app"
-import auth from "@react-native-firebase/auth"
-import { useState, useEffect } from 'react';
-import {
-  View, TextInput, Button, Text
-} from 'react-native';
+import {useState, useEffect} from 'react';
+import LoginScreen from './screens/LoginScreen';
+import HomeScreen from './screens/HomeScreen';
+import FriendsScreen from './screens/FriendsScreen';
+import ProfileScreen from './screens/ProfileScreen';
+import auth from '@react-native-firebase/auth';
+import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import {NavigationContainer} from '@react-navigation/native';
+import {Image} from 'react-native';
 
-
-
-const App = () => {
- const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
-
-  const handleSignUp = () => {
-    auth()
-      .createUserWithEmailAndPassword(email, password)
-      .then(() => {
-        console.log('User account created & signed in!');
-        // Naviguer vers un autre écran si nécessaire
-      })
-      .catch(error => {
-        if (error.code === 'auth/email-already-in-use') {
-          setErrorMessage('That email address is already in use!');
-        } else if (error.code === 'auth/invalid-email') {
-          setErrorMessage('That email address is invalid!');
-        } else {
-          setErrorMessage(error.message);
-        }
-      });
-  };
-
-
-  return (<View>
-                <TextInput
-                  placeholder="Email"
-                  value={email}
-                  onChangeText={setEmail}
-                />
-                <TextInput
-                  placeholder="Password"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry
-                />
-                <Button title="Sign Up" onPress={handleSignUp} />
-                {errorMessage ? <Text>{errorMessage}</Text> : null}
-              </View>)
+function ForYou() {
+  return <HomeScreen></HomeScreen>;
 }
 
+function Friends() {
+  return <FriendsScreen></FriendsScreen>;
+}
+
+function Profile() {
+  return <ProfileScreen></ProfileScreen>;
+}
+
+// Unauthenticated screens
+function Login() {
+  return <LoginScreen></LoginScreen>;
+}
+
+// Create stack navigator for authenticated screens
+const AuthStack = createBottomTabNavigator();
+
+function AuthenticatedStack() {
+  return (
+    <AuthStack.Navigator>
+      <AuthStack.Screen
+        name="Random"
+        component={ForYou}
+        options={{
+          headerShown: false,
+          tabBarIcon: ({color, size}) => (
+            <Image
+              source={require('./assets/random.png')}
+              style={{tintColor: color, width: size, height: size}}
+            />
+          ),
+        }}
+      />
+      <AuthStack.Screen
+        name="Friends"
+        component={Friends}
+        options={{
+          headerShown: false,
+          tabBarIcon: ({color, size}) => (
+            <Image
+              source={require('./assets/friends.png')}
+              style={{tintColor: color, width: size, height: size}}
+            />
+          ),
+        }}
+      />
+      <AuthStack.Screen
+        name="Profile"
+        component={Profile}
+        options={{
+          headerShown: false,
+          tabBarIcon: ({color, size}) => (
+            <Image
+              source={require('./assets/user.png')}
+              style={{tintColor: color, width: size, height: size}}
+            />
+          ),
+        }}
+      />
+    </AuthStack.Navigator>
+  );
+}
+
+// Main App component
+function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState(null);
+  const handleLogin = () => {
+    setIsLoggedIn(true);
+  };
+
+  useEffect(() => {
+    const unsubscribe = auth().onAuthStateChanged(newUser => {
+      setUser(newUser);
+    });
+    return () => unsubscribe();
+  }, []);
+  return (
+    <NavigationContainer>
+      {user ? <AuthenticatedStack /> : <LoginScreen onLogin={handleLogin} />}
+    </NavigationContainer>
+  );
+}
 
 export default App;
