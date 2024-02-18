@@ -1,8 +1,8 @@
 import React from 'react';
-import {firebase} from '@react-native-firebase/app';
 import auth from '@react-native-firebase/auth';
-import {useState, useEffect} from 'react';
+import {useState} from 'react';
 import LinearGradient from 'react-native-linear-gradient';
+import firestore from '@react-native-firebase/firestore';
 import {
   View,
   TextInput,
@@ -12,7 +12,7 @@ import {
   Image,
 } from 'react-native';
 
-const LoginScreen = ({navigation, onLogin}) => {
+const LoginScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -21,10 +21,21 @@ const LoginScreen = ({navigation, onLogin}) => {
   const handleSignUp = () => {
     auth()
       .createUserWithEmailAndPassword(email, password)
-      .then(() => {
-        console.log('User account created & signed in!');
+      .then(async () => {
+        const user = auth().currentUser;
+        if (user) {
+          const uid = user.uid;
+          const name = email.split('@')[0];
+          const userRef = firestore().collection('users').doc(uid);
+          await userRef.set({
+            email: email,
+            name: name,
+            followers: [],
+            following: [],
+          });
 
-        onLogin();
+          console.log('User account created & signed in!');
+        }
       })
       .catch(error => {
         if (error.code === 'auth/email-already-in-use') {
@@ -39,9 +50,7 @@ const LoginScreen = ({navigation, onLogin}) => {
   const handleLogin = () => {
     auth()
       .signInWithEmailAndPassword(email, password)
-      .then(() => {
-        onLogin();
-      })
+      .then(() => {})
       .catch(error => {
         if (error.code === 'auth/user-not-found') {
           setErrorMessage('Aucun utilisateur trouvé pour cet email.');

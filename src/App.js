@@ -21,19 +21,13 @@ function Profile() {
   return <ProfileScreen></ProfileScreen>;
 }
 
-// Unauthenticated screens
-function Login() {
-  return <LoginScreen></LoginScreen>;
-}
-
-// Create stack navigator for authenticated screens
 const AuthStack = createBottomTabNavigator();
 
 function AuthenticatedStack() {
   return (
     <AuthStack.Navigator>
       <AuthStack.Screen
-        name="Random"
+        name="Aléatoire"
         component={ForYou}
         options={{
           headerShown: false,
@@ -46,7 +40,7 @@ function AuthenticatedStack() {
         }}
       />
       <AuthStack.Screen
-        name="Friends"
+        name="Amis"
         component={Friends}
         options={{
           headerShown: false,
@@ -75,13 +69,11 @@ function AuthenticatedStack() {
   );
 }
 
-// Main App component
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
-  const handleLogin = () => {
-    setIsLoggedIn(true);
-  };
+  useEffect(() => {
+    checkAndRequestNotificationPermission();
+  }, []);
 
   useEffect(() => {
     const unsubscribe = auth().onAuthStateChanged(newUser => {
@@ -91,7 +83,7 @@ function App() {
   }, []);
   return (
     <NavigationContainer>
-      {user ? <AuthenticatedStack /> : <LoginScreen onLogin={handleLogin} />}
+      {user ? <AuthenticatedStack /> : <LoginScreen />}
     </NavigationContainer>
   );
 }
